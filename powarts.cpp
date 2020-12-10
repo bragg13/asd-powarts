@@ -7,7 +7,7 @@
 using namespace std;
 
 // START Spazio dichiarazione funzioni
-void findAttackedCities(vector< set<int> > parent, set<int>::iterator parentIt);
+void findAttackedCities(vector< set<int> >& parent, set<int>::iterator& parentIt);
 
 
 // END Spazio dichiarazione funzioni
@@ -34,7 +34,7 @@ struct edge {
 struct citta {
     int id;                    //id della citta (importandoquelli in input) @R
     vector<edge> adj;
-    int distance;           //distance from root=povo
+    int distance = 10001;           //distance from root=povo
     path bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
     int count_apparizioni = 1;
 };
@@ -74,10 +74,9 @@ void getInput(){
 void dijkstra(){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;      //priority queue con min heap (il minore è il top)
     vector<int> nds(N);
-    vector<int> dist(N, 10000); //!!!si può usare distance al posto di un vettore                  //vettore che tenga le distanze di ogni nodo dal root
 
     q.push(make_pair(0, P));                                                                //pusho in prqueue il nodo di partenza, con distanza 0 (va messo prima 0 perche tiene ordinata la queue)
-    dist[P] = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
+    graph[P].distance = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
 
     vector< set<int> > parent(N);                                                        //vettore che tenga i parent di ogni nodo
     parent[P].insert(P);                                                                 //il nodo root non ha padre, aka e' se stesso?
@@ -90,16 +89,16 @@ void dijkstra(){
             int nodo_adj = graph[nodo].adj[i].to;                                           //prendo il nodo adiacente iterato e il suo peso
             int nodo_adj_weight = graph[nodo].adj[i].weight;
 
-            if(dist[nodo_adj] > dist[nodo]+nodo_adj_weight){                                //se questo è un cammino piu veloce per arrivare a nodo_adj
+            if(graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){                                //se questo è un cammino piu veloce per arrivare a nodo_adj
 
-                dist[nodo_adj] = dist[nodo]+nodo_adj_weight;                                //segno la nuova distanza
+                graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;                                //segno la nuova distanza
                 
                 parent[nodo_adj].insert(nodo);                                              //tengo traccia del parent da cui arrivo a nodo_adj
                 parent[nodo_adj].insert(parent[nodo].begin(), parent[nodo].end());          //inserisco anche i parent del nodo "vecchio"
 
-                q.push(make_pair(dist[nodo_adj], nodo_adj));                                //metto il queue la coppia con la distanza di questo nodo
+                q.push(make_pair(graph[nodo_adj].distance, nodo_adj));                                //metto il queue la coppia con la distanza di questo nodo
          
-            } else if (dist[nodo_adj] == dist[nodo]+nodo_adj_weight) {                      //ho trovato (th.) un nodo di snodo
+            } else if (graph[nodo_adj].distance == graph[nodo].distance+nodo_adj_weight) {                      //ho trovato (th.) un nodo di snodo
                 nds.push_back(nodo_adj);
             }
         }    
@@ -134,7 +133,7 @@ void dijkstra(){
     }
 }*/
 
-void findAttackedCities(vector< set<int> > parent, set<int>::iterator parentIt){         
+void findAttackedCities(vector< set<int> >& parent, set<int>::iterator& parentIt){         
     for(int i = 0; i < N; i++){
         for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){
             if(*parentIt != P)
