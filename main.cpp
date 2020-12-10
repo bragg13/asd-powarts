@@ -8,6 +8,8 @@ using namespace std;
 
 /*
  * TODO: se un nodo è troppo distante non va guardato
+ *      _associare ad ogni nodo il relativo id (getInput) @R
+ *      _cambiare to da int a citta @R
 */
 
 struct path {
@@ -20,8 +22,10 @@ struct edge {
 };
 
 struct citta {
+    int id;                    //id della citta (importandoquelli in input) @R
     vector<edge> adj;
-    int distance;           //distance from root=povo 
+    int distance;           //distance from root=povo
+    path bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
 };
 
 
@@ -121,6 +125,21 @@ void printGraph(){
         }
     }
 }
+
+/*void bestPath(citta node,citta p){                                  //BOZZA DELL'ALGORITMO CHE TROVA IL VETTORE DEGLI ELEMENTI INDISPENSABILI PER IL BESTPATH DA P A NODE @R
+    node.bestPath.p.push_back(node.id);
+    
+    vector<edge> e;
+    for(edge &edge : node.adj){
+        if(edge.weight == (node.distance - edge.to.distance)) {
+            e.push_back(edge);   
+        }
+    }
+    
+    for(edge &edge : e){
+        bestPath(e.to,p);
+    }
+}*/
 
 int main(){
     auto t1 = chrono::steady_clock::now();
