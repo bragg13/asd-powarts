@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <chrono>
 #include <fstream>
+#include <set>
 using namespace std;
 
 /*
@@ -49,14 +51,14 @@ void getInput(){
 
 void dijkstra(){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;      //priority queue con min heap (il minore è il top)
-
+    vector<int> nds(N);
     vector<int> dist(N, 10000); //not sure 10000 is correct, maybe 10001?                   //vettore che tenga le distanze di ogni nodo dal root
 
     q.push(make_pair(0, P));                                                                //pusho in prqueue il nodo di partenza, con distanza 0 (va messo prima 0 perche tiene ordinata la queue)
     dist[P] = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
 
-    vector<int> parent(N, 10000);                                                           //vettore che tenga i parent di ogni nodo
-    parent[P] = P;                                                                          //il nodo root non ha padre, aka e' se stesso?
+    vector< set<int> > parent(N);                                                        //vettore che tenga i parent di ogni nodo
+    parent[P].insert(P);                                                                 //il nodo root non ha padre, aka e' se stesso?
 
     while(!q.empty()){                                                                      //while queue is not empty
         int nodo = q.top().second;   q.pop();                                               //poppo l'indice del nodo (aka anche il numero del nodo effettivo) che ha distanza minore finora
@@ -70,24 +72,39 @@ void dijkstra(){
 
                 dist[nodo_adj] = dist[nodo]+nodo_adj_weight;                                //segno la nuova distanza
                 
-                parent[nodo_adj] = nodo;                                                    //tengo traccia del parent da cui arrivo a nodo_adj
+                parent[nodo_adj].insert(nodo);                                              //tengo traccia del parent da cui arrivo a nodo_adj
+                parent[nodo_adj].insert(parent[nodo].begin(), parent[nodo].end());          //inserisco anche i parent del nodo "vecchio"
 
                 q.push(make_pair(dist[nodo_adj], nodo_adj));                                //metto il queue la coppia con la distanza di questo nodo
+         
+            } else if (dist[nodo_adj] == dist[nodo]+nodo_adj_weight) {                      //ho trovato (th.) un nodo di snodo
+                nds.push_back(nodo_adj);
             }
         }    
     }
     
-
+    //devo usare un iterator per iterare un set
+    set<int>::iterator parentIt;
+    cout << endl << "parents:";
     for(int i=0; i<N; i++){
-        cout << P << " - " << i << " = " << dist[i] << endl;
-        cout << " path: " << i << "-";
-        int j=i;
-        while(!parent[j]==P){
-            cout << parent[j] << "-";
-            j = parent[j];
+
+        cout << endl << i << ": ";
+        for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){
+            cout << *parentIt << " ";
         }
-        cout << P << endl;
     }
+
+    //vecchio ciclo per controllare i parents
+    // for(int i=0; i<N; i++){
+    //     cout << P << " - " << i << " = " << dist[i] << endl;
+    //     cout << " path: " << i << "-";
+    //     int j=i;
+    //     while(!parent[j]==P){
+    //         cout << parent[j] << "-";
+    //         j = parent[j];
+    //     }
+    //     cout << P << endl;
+    // }
 }
 
 void printGraph(){
@@ -100,12 +117,15 @@ void printGraph(){
 }
 
 int main(){
+    auto t1 = chrono::steady_clock::now();
+
     getInput();
     // printGraph();
-   
-    cout << endl << endl;
-
     dijkstra();
+
+    auto t2 = chrono::steady_clock::now();
+    chrono::duration<double> s = t2-t1;
+    cout << endl << "time: " << s.count() << endl;
 
     return 0;
 }
