@@ -6,6 +6,13 @@
 #include <set>
 using namespace std;
 
+// START Spazio dichiarazione funzioni
+void findAttackedCity(vector< set<int> > parent, set<int>::iterator parentIt);
+
+
+// END Spazio dichiarazione funzioni
+
+
 /*
  * TODO: se un nodo è troppo distante non va guardato
  *      _associare ad ogni nodo il relativo id (getInput) @R
@@ -26,7 +33,6 @@ struct citta {
     vector<edge> adj;
     int distance;           //distance from root=povo
     path bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
-    int counter;
 };
 
 
@@ -105,6 +111,9 @@ void dijkstra(){
         }
     }
 
+    findAttackedCity(parent, parentIt);  //gli argomenti sono la lista di cammini ottimali per ogni nodo e l'iteratore di questa lista (forse + veloce)
+
+
     //vecchio ciclo per controllare i parents
     // for(int i=0; i<N; i++){
     //     cout << P << " - " << i << " = " << dist[i] << endl;
@@ -127,21 +136,8 @@ void printGraph(){
     }
 }
 
-
-/*void definePath(citta node){
-    //trova i nodi con counter massimo ed esclude gli altri;
-    
-    
-}*/
-
 /*void bestPath(citta node,citta p){                                  //BOZZA DELL'ALGORITMO CHE TROVA IL VETTORE DEGLI ELEMENTI INDISPENSABILI PER IL BESTPATH DA P A NODE @R
-    if(node == p){
-        definePath(node);
-        return;
-    }
     node.bestPath.p.push_back(node.id);
-    node.counter++;
-    
     
     vector<edge> e;
     for(edge &edge : node.adj){
@@ -154,6 +150,24 @@ void printGraph(){
         bestPath(e.to,p);
     }
 }*/
+
+void findAttackedCity(vector< set<int> > parent, set<int>::iterator parentIt){         
+    std::vector<int> map(N, 0);                                                              //creo un vettore di largezza N e con elementi inizializzati a 0
+                                                                                             //dato che Powarts può essere qualsiasi numero
+    for(int i = 0; i < N; i++){
+        for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){          //itero per ogni cammino di ogni nodo
+            if(*parentIt != P)                                                               //se un nodo è diverso da Powarts auemento di 1 il suo count
+                map[*parentIt]++;
+        }
+    }
+    int max = map[0];                                                                         //easyssima funzione per trovare il valore apparso + volte
+    for(int i = 1; i < N; i++){
+        if(map[i] > max)
+            max = map[i];
+    }
+
+    cout << endl << "La città attaccata è " << max << endl;
+}
 
 int main(){
     auto t1 = chrono::steady_clock::now();
