@@ -68,12 +68,13 @@ void getInput(){
        e.to = a;
        graph[b].adj.push_back(e);
    }
+    in.close();
 }
 
 void dijkstra(){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;      //priority queue con min heap (il minore è il top)
     vector<int> nds(N);
-    vector<int> dist(N, 10000); //not sure 10000 is correct, maybe 10001?                   //vettore che tenga le distanze di ogni nodo dal root
+    vector<int> dist(N, 10000); //!!!si può usare distance al posto di un vettore                  //vettore che tenga le distanze di ogni nodo dal root
 
     q.push(make_pair(0, P));                                                                //pusho in prqueue il nodo di partenza, con distanza 0 (va messo prima 0 perche tiene ordinata la queue)
     dist[P] = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
