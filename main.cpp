@@ -26,6 +26,7 @@ struct citta {
     vector<edge> adj;
     int distance;           //distance from root=povo
     path bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
+    int counter;
 };
 
 
@@ -126,8 +127,21 @@ void printGraph(){
     }
 }
 
+
+/*void definePath(citta node){
+    //trova i nodi con counter massimo ed esclude gli altri;
+    
+    
+}*/
+
 /*void bestPath(citta node,citta p){                                  //BOZZA DELL'ALGORITMO CHE TROVA IL VETTORE DEGLI ELEMENTI INDISPENSABILI PER IL BESTPATH DA P A NODE @R
+    if(node == p){
+        definePath(node);
+        return;
+    }
     node.bestPath.p.push_back(node.id);
+    node.counter++;
+    
     
     vector<edge> e;
     for(edge &edge : node.adj){
