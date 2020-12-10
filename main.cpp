@@ -7,7 +7,7 @@
 using namespace std;
 
 // START Spazio dichiarazione funzioni
-void findAttackedCity(vector< set<int> > parent, set<int>::iterator parentIt);
+void findAttackedCities(vector< set<int> > parent, set<int>::iterator parentIt);
 
 
 // END Spazio dichiarazione funzioni
@@ -111,7 +111,7 @@ void dijkstra(){
         }
     }
 
-    findAttackedCity(parent, parentIt);  //gli argomenti sono la lista di cammini ottimali per ogni nodo e l'iteratore di questa lista (forse + veloce)
+    findAttackedCities(parent, parentIt);  //gli argomenti sono la lista di cammini ottimali per ogni nodo e l'iteratore di questa lista (forse + veloce)
 
 
     //vecchio ciclo per controllare i parents
@@ -151,7 +151,7 @@ void printGraph(){
     }
 }*/
 
-void findAttackedCity(vector< set<int> > parent, set<int>::iterator parentIt){         
+void findAttackedCities(vector< set<int> > parent, set<int>::iterator parentIt){         
     std::vector<int> map(N, 0);                                                              //creo un vettore di largezza N e con elementi inizializzati a 0
                                                                                              //dato che Powarts può essere qualsiasi numero
     for(int i = 0; i < N; i++){
@@ -166,7 +166,7 @@ void findAttackedCity(vector< set<int> > parent, set<int>::iterator parentIt){
             max = map[i];
     }
 
-    cout << endl << "La città attaccata è " << max << endl;
+    cout << endl << "Gli studenti arrivati in ritardo sono " << max+1 << endl;
 }
 
 int main(){
