@@ -36,6 +36,7 @@ struct citta {
     vector<edge> adj;
     int distance;           //distance from root=povo
     path bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
+    int count_apparizioni = 1;
 };
 
 
@@ -133,23 +134,22 @@ void dijkstra(){
 }*/
 
 void findAttackedCities(vector< set<int> > parent, set<int>::iterator parentIt){         
-    std::vector<int> map(N, 0);                                                              //creo un vettore di largezza N e con elementi inizializzati a 0
-                                                                                             //dato che Powarts può essere qualsiasi numero
     for(int i = 0; i < N; i++){
-        for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){          //itero per ogni cammino di ogni nodo
-            if(*parentIt != P)                                                               //se un nodo è diverso da Powarts auemento di 1 il suo count
-                map[*parentIt]++;
+        for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){
+            if(*parentIt != P)
+                graph[*parentIt].count_apparizioni++;
         }
     }
-    int max = map[0];                                                                         //easyssima funzione per trovare il valore apparso + volte
-    for(int i = 1; i < N; i++){
-        if(map[i] > max)
-            max = map[i];
+
+    int max = 1;
+    for(int i = 0; i < N; i++){
+        if(graph[i].count_apparizioni > max)
+            max = graph[i].count_apparizioni;
     }
 
-    cout << endl << "Gli studenti arrivati in ritardo sono " << max+1 << endl;
+    cout << endl << "Gli studenti arrivati in ritardo sono " << max << endl;
     ofstream out("output.txt");
-    out << max+1;
+    out << max;
     out.flush(); out.close();
 }
 
