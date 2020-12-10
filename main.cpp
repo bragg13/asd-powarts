@@ -26,7 +26,11 @@ int P;                      //city of Powarts
 vector<citta> graph;
 
 void getInput(){
-    ifstream in("input.txt");
+    ifstream in("input0.txt");
+    // ifstream in("input1.txt");
+    // ifstream in("input2.txt");
+    // ifstream in("input3.txt");
+    // ifstream in("input4.txt");
     in >> N >> M >> P;                                                                      //input for N M P
     graph.resize(N);
 
@@ -49,72 +53,63 @@ void getInput(){
    }
 }
 
+
 void dijkstra(){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;      //priority queue con min heap (il minore è il top)
-    vector<int> nds(N);
+    vector<int> nds(N, -1);                                                                  //vettore che tiene i nodi di snodo e quante volte vengono attraversati
     vector<int> dist(N, 10000); //not sure 10000 is correct, maybe 10001?                   //vettore che tenga le distanze di ogni nodo dal root
 
     q.push(make_pair(0, P));                                                                //pusho in prqueue il nodo di partenza, con distanza 0 (va messo prima 0 perche tiene ordinata la queue)
     dist[P] = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
 
-    vector< set<int> > parent(N);                                                        //vettore che tenga i parent di ogni nodo
-    parent[P].insert(P);                                                                 //il nodo root non ha padre, aka e' se stesso?
+    vector< set<int> > parent(N);                                                           //vettore che tenga i parent di ogni nodo
+    // parent[P].insert(P);                                                                    //il nodo root non ha padre, aka e' se stesso?
+
 
     while(!q.empty()){                                                                      //while queue is not empty
         int nodo = q.top().second;   q.pop();                                               //poppo l'indice del nodo (aka anche il numero del nodo effettivo) che ha distanza minore finora
-
+        cout << "nodo i esame: " << nodo << endl;
         for(int i=0; i<graph[nodo].adj.size(); i++){                                        //itero tra gli adiacenti del nodo
 
-            int nodo_adj = graph[nodo].adj[i].to;                                           //prendo il nodo adiacente iterato e il suo peso
-            int nodo_adj_weight = graph[nodo].adj[i].weight;
+            //TODO: potrei esserci gia passato
+            if(graph[nodo].adj[i].to != P){
+                int nodo_adj = graph[nodo].adj[i].to;                                           //prendo il nodo adiacente iterato e il suo peso
+                int nodo_adj_weight = graph[nodo].adj[i].weight;
 
-            if(dist[nodo_adj] > dist[nodo]+nodo_adj_weight){                                //se questo è un cammino piu veloce per arrivare a nodo_adj
+                cout << "  adj in easme: " << nodo_adj << endl;
 
-                dist[nodo_adj] = dist[nodo]+nodo_adj_weight;                                //segno la nuova distanza
-                
-                parent[nodo_adj].insert(nodo);                                              //tengo traccia del parent da cui arrivo a nodo_adj
-                parent[nodo_adj].insert(parent[nodo].begin(), parent[nodo].end());          //inserisco anche i parent del nodo "vecchio"
+                if(dist[nodo_adj] > dist[nodo]+nodo_adj_weight){                                //se questo è un cammino piu veloce per arrivare a nodo_adj
 
-                q.push(make_pair(dist[nodo_adj], nodo_adj));                                //metto il queue la coppia con la distanza di questo nodo
-         
-            } else if (dist[nodo_adj] == dist[nodo]+nodo_adj_weight) {                      //ho trovato (th.) un nodo di snodo
-                nds.push_back(nodo_adj);
+                    dist[nodo_adj] = dist[nodo]+nodo_adj_weight;                                //segno la nuova distanza
+                    
+                    parent[nodo_adj].insert(nodo);                                              //tengo traccia del parent da cui arrivo a nodo_adj
+                    // if(nds[nodo] != -1){                                                     //controllo se il parent e' un nds, e nel caso gli aggiorno il contatore
+                    //     nds[nodo]++;
+                    // }
+                    parent[nodo_adj].insert(parent[nodo].begin(), parent[nodo].end());          //inserisco anche i parent del nodo "vecchio"
+
+                    q.push(make_pair(dist[nodo_adj], nodo_adj));                                //metto in queue la coppia con la distanza di questo nodo
+            
+                }
             }
         }    
     }
-    
+
+
     //devo usare un iterator per iterare un set
+    
     set<int>::iterator parentIt;
     cout << endl << "parents:";
     for(int i=0; i<N; i++){
-
         cout << endl << i << ": ";
         for(parentIt = parent[i].begin(); parentIt != parent[i].end(); parentIt++){
             cout << *parentIt << " ";
         }
     }
 
-    //vecchio ciclo per controllare i parents
-    // for(int i=0; i<N; i++){
-    //     cout << P << " - " << i << " = " << dist[i] << endl;
-    //     cout << " path: " << i << "-";
-    //     int j=i;
-    //     while(!parent[j]==P){
-    //         cout << parent[j] << "-";
-    //         j = parent[j];
-    //     }
-    //     cout << P << endl;
-    // }
+
 }
 
-void printGraph(){
-    for(int i=0; i<N; i++){
-        cout << "Nodo: " << i << ", nodi vicini:" << endl;
-        for(int j=0; j<graph[i].adj.size(); j++){
-            cout << "    " << graph[i].adj[j].to << ", peso: " << graph[i].adj[j].weight << endl;
-        }
-    }
-}
 
 int main(){
     auto t1 = chrono::steady_clock::now();
