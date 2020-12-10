@@ -10,6 +10,10 @@ using namespace std;
  * TODO: se un nodo è troppo distante non va guardato
 */
 
+struct path {
+    vector<int> p;        //si potrebbe memorizzare anche come vector<citta> @R
+};
+
 struct edge {
     int to;
     int weight;
@@ -17,8 +21,10 @@ struct edge {
 
 struct citta {
     vector<edge> adj;
-    int distance;           //distance from root=povo
+    int distance;           //distance from root=povo 
 };
+
+
 
 int N;                      //no. of cities (aka students+1) 
 int M;                      //no. of paths
