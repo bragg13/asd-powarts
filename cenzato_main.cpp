@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <chrono>
 #include <fstream>
-#include <set>
 using namespace std;
 
 // START Spazio dichiarazione funzioni
@@ -12,10 +10,6 @@ void findAttackedCities();
 
 // END Spazio dichiarazione funzioni
 
-
-struct path {
-    vector<int> p;        //si potrebbe memorizzare anche come vector<citta> @R
-};
 
 struct edge {
     int to;
@@ -110,21 +104,15 @@ void findAttackedCities(){
             max = graph[i].count_apparizioni;
     }
 
-    cout << endl << "Gli studenti arrivati in ritardo sono " << max << endl;
     ofstream out("output.txt");
     out << max;
     out.flush(); out.close();
 }
 
 int main(){
-    auto t1 = chrono::steady_clock::now();
 
     getInput();
     dijkstra();
     findAttackedCities();
-    auto t2 = chrono::steady_clock::now();
-    chrono::duration<double> s = t2-t1;
-    cout << endl << "time: " << s.count() << endl;
-
     return 0;
 }
