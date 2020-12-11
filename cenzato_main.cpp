@@ -2,9 +2,12 @@
 #include <vector>
 #include <queue>
 #include <fstream>
+#include <unordered_set>
 using namespace std;
 
 // START Spazio dichiarazione funzioni
+void getInput();
+void dijkstra();
 void findAttackedCities();
 
 
@@ -16,24 +19,24 @@ struct edge {
     int weight;
 };
 
-struct citta {
-    int id;                    //id della citta (importandoquelli in input) @R
+struct citta {            
     vector<edge> adj;
-    int distance = 10001;           //distance from root=povo
-    std::vector<int> bestPath;          //insieme dei nodi facenti parte di tutti i bestPath da Powarts a citta @R
-    int count_apparizioni = 1;
+    bool is_infinity = true;
+    int distance;
+    int predecessore;       
+    int count_apparizioni = 1;   //il grafo è connesso, il nodo appare almeno 1 volta in un percorso minimo
 };
 
 
 
-int N;                      //no. of cities (aka students+1) 
-int M;                      //no. of paths
-int P;                      //city of Powarts
+int N;                      
+int M;                   
+int P;                      
 vector<citta> graph;
 
 void getInput(){
     ifstream in("input.txt");
-    in >> N >> M >> P;                                                                      //input for N M P
+    in >> N >> M >> P;
     graph.resize(N);
 
 
@@ -57,31 +60,27 @@ void getInput(){
 }
 
 void dijkstra(){
-    priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;      //priority queue con min heap (il minore è il top)
+    priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;
 
-    q.push(make_pair(0, P));                                                                //pusho in prqueue il nodo di partenza, con distanza 0 (va messo prima 0 perche tiene ordinata la queue)
-    graph[P].distance = 0;                                                                            //la distanza da root a root è 0 (riporto quel che ho messo nella queue appena sopra)
-
-    graph[P].bestPath.push_back(P);                                                                 //il nodo root non ha padre, aka e' se stesso?
+    q.push(make_pair(0, P));
+    graph[P].distance = 0; 
+    graph[P].is_infinity = false;
+    graph[P].predecessore = P;
     int nodo;
 
-    while(!q.empty()){                                                                      //while queue is not empty
-        nodo = q.top().second;   q.pop();                                               //poppo l'indice del nodo (aka anche il numero del nodo effettivo) che ha distanza minore finora
+    while(!q.empty()){
+        nodo = q.top().second;
+        q.pop();
+        for(int i=0; i<graph[nodo].adj.size(); i++){
 
-        for(int i=0; i<graph[nodo].adj.size(); i++){                                        //itero tra gli adiacenti del nodo
-
-            int nodo_adj = graph[nodo].adj[i].to;                                           //prendo il nodo adiacente iterato e il suo peso
-            int nodo_adj_weight = graph[nodo].adj[i].weight;
-
-            if(graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){                                //se questo è un cammino piu veloce per arrivare a nodo_adj
-
-                graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;                                //segno la nuova distanza
+            int nodo_adj = graph[nodo].adj[i].to;
+            int nodo_adj_weight = graph[nodo].adj[i].weight;              
+            if(graph[nodo_adj].is_infinity || graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){
                 
-                graph[nodo_adj].bestPath.push_back(nodo);                                              //tengo traccia del parent da cui arrivo a nodo_adj
-                graph[nodo_adj].bestPath.insert(graph[nodo_adj].bestPath.begin(),graph[nodo].bestPath.begin(), graph[nodo].bestPath.end());          //inserisco anche i parent del nodo "vecchio"
-
-                q.push(make_pair(graph[nodo_adj].distance, nodo_adj));                                //metto il queue la coppia con la distanza di questo nodo
-         
+                graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;
+                graph[nodo_adj].is_infinity = false;
+                graph[nodo_adj].predecessore = nodo;
+                q.push(make_pair(graph[nodo_adj].distance, nodo_adj));
             }
         }    
     }
@@ -89,23 +88,36 @@ void dijkstra(){
 
 
 void findAttackedCities(){   
-    int tmp;      
+    unordered_set<int>::iterator it;      
     for(int i = 0; i < N; i++){
-        for(int j = 0; j < graph[i].bestPath.size(); j++){
-            tmp = graph[i].bestPath[j];
-            if(tmp != P)
-            graph[tmp].count_apparizioni++;
+        for(int j = graph[i].predecessore; j != P;j = graph[j].predecessore){
+            graph[j].count_apparizioni++;
+        }
+    }
+    int max = 1;
+    int nodo_attaccato = 0;
+    for(int i = 0; i < N; i++){
+        if(graph[i].count_apparizioni > max){
+            max = graph[i].count_apparizioni;
+            nodo_attaccato = i;
+        }
+    }
+    ofstream out("output.txt");
+    out << max << endl;
+    std::vector<int> ritardatari;
+    ritardatari.push_back(nodo_attaccato);
+    for(int i = 0; i < N; i++){               //Soluzione naive
+        for(int j = graph[i].predecessore; j != P; j = graph[j].predecessore){
+            if(j == nodo_attaccato){
+                ritardatari.push_back(i);
+                break;
+            }
         }
     }
 
-    int max = 1;
-    for(int i = 0; i < N; i++){
-        if(graph[i].count_apparizioni > max)
-            max = graph[i].count_apparizioni;
+    for(int i = 0; i < ritardatari.size(); i++){
+        out << ritardatari[i] << endl;
     }
-
-    ofstream out("output.txt");
-    out << max;
     out.flush(); out.close();
 }
 
