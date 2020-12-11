@@ -88,7 +88,6 @@ void dijkstra(){
 
 
 void findAttackedCities(){   
-    unordered_set<int>::iterator it;      
     for(int i = 0; i < N; i++){
         for(int j = graph[i].predecessore; j != P;j = graph[j].predecessore){
             graph[j].count_apparizioni++;
