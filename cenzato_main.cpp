@@ -24,7 +24,7 @@ struct citta {
     int distance;
     int predecessore;        
     int count_apparizioni = 1;      //il grafo è connesso, il nodo appare almeno 1 volta in un percorso minimo
-    int grand_parent;
+    int grand_parent;               //numero del nodo + vicino a Powarts collegato da un percorso ottimale(inizializzato al numero della città stessa)
 };
 
 
@@ -49,7 +49,7 @@ void getInput(){
        // a--[w]--b
        e.to = b;
        graph[a].adj.push_back(e);
-       graph[a].grand_parent = a;
+       graph[a].grand_parent = a; 
        // b--[w]--a
        e.to = a;
        graph[b].adj.push_back(e);
@@ -67,18 +67,18 @@ void dijkstra(){
     graph[P].predecessore = P;
     int nodo;
 
-        nodo = q.top().second;																					//prendo il nodo con distanza minima da root 
-        q.pop();
-        for(int i=0; i<graph[nodo].adj.size(); i++){															//visito gli adiacenti
-            int nodo_adj = graph[nodo].adj[i].to;																//nodo adiacente
-            int nodo_adj_weight = graph[nodo].adj[i].weight;              										//peso dell'adiacente
-            if(graph[nodo_adj].is_infinity || graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){	//se il nodo non è stato scoperto ancora or trovo un percorso minore
-                graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;								//nuova distanza
-                graph[nodo_adj].is_infinity = false;					
-                graph[nodo_adj].predecessore = nodo;															//salvo il predecessore del nodo in esame
-                q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											//metto il queue la coppia con la distanza di questo nodo
-            }
-        }    
+    nodo = q.top().second;																					    //ciclo poco elegante per togliere Powarts dalla queue
+    q.pop();
+    for(int i=0; i<graph[nodo].adj.size(); i++){															
+        int nodo_adj = graph[nodo].adj[i].to;																
+        int nodo_adj_weight = graph[nodo].adj[i].weight;              										
+        if(graph[nodo_adj].is_infinity || graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){	
+            graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;								
+            graph[nodo_adj].is_infinity = false;					
+            graph[nodo_adj].predecessore = nodo;															
+            q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											
+        }
+    }    
 
     while(!q.empty()){
         nodo = q.top().second;																					//prendo il nodo con distanza minima da root 
@@ -91,9 +91,9 @@ void dijkstra(){
                 graph[nodo_adj].is_infinity = false;					
                 graph[nodo_adj].predecessore = nodo;															//salvo il predecessore del nodo in esame
 
-                graph[graph[nodo_adj].grand_parent].count_apparizioni--;
-                graph[nodo_adj].grand_parent = graph[nodo].grand_parent;
-                graph[graph[nodo].grand_parent].count_apparizioni++;
+                graph[graph[nodo_adj].grand_parent].count_apparizioni--;                                        //è stato trovato un percorso + veloce, diminuisco count al vecchio grand_parent
+                graph[nodo_adj].grand_parent = graph[nodo].grand_parent;                                        //cambio grand_parent al nodo
+                graph[graph[nodo].grand_parent].count_apparizioni++;                                            //aggingo 1 al count del nuovo grand_parent
                 
                 q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											//metto il queue la coppia con la distanza di questo nodo
             }
@@ -103,25 +103,7 @@ void dijkstra(){
 }
 
 
-void findAttackedCities(){     
-    //per ogni nodo del grafo itero sul suo cammino minimo per raggiungere Powarts
-  	//ad ogni nodo che incontro aumento il numero di frequenza, che ci servirà a trovare il nodo su cui passano + cammini, cioè quello che verrà attaccato
-    /*for(int i = 0; i < N; i++){
-        for(int j = graph[i].predecessore; j != P;j = graph[j].predecessore){
-            graph[j].count_apparizioni++;
-        }
-    }
-    cout << "Fine frequenze!" << endl;
-    int max = 0;
-    int nodo_attaccato = 0;         				//identifica il nodo che appartiene a più cammini e il numero di nodi che non rende più
-    for(int i = 0; i < N; i++){						// raggiungibili se attaccato
-        if(graph[i].count_apparizioni > max){
-            max = graph[i].count_apparizioni;
-            nodo_attaccato = i;
-        }
-    }*/
-
-
+void findAttackedCities(){
     int max = 0;
     int nodo_attaccato = 0;
     int tmp;
@@ -136,20 +118,15 @@ void findAttackedCities(){
 
     ofstream out("output.txt");
     out << max << endl;								//stampa il numero dei nodi non più raggiungibili in tempo
-    std::vector<int> ritardatari;					//vettore per tenere traccia delle citta interessate dall'attacco
     
-    ritardatari.push_back(nodo_attaccato);      
+    out << nodo_attaccato << endl;    
     for(int i = 0; i < N; i++){               		//Soluzione naive:Itera un'altra volta tra tutti i nodi, salva i nodi nel cui cammino minimo fa parte il nodo attaccato
         for(int j = graph[i].predecessore; j != P; j = graph[j].predecessore){
             if(j == nodo_attaccato){
-                ritardatari.push_back(i);
+                out << i << endl;
                 break;								//se trovo il nodo attaccato non ho bisogno di risalire il cammino ulteriormente
             }
         }
-    }
-
-    for(int i = 0; i < ritardatari.size(); i++){
-        out << ritardatari[i] << endl;				//stampa i nodi non più raggiungibili in tempo
     }
     
     out.flush(); out.close();
@@ -157,9 +134,7 @@ void findAttackedCities(){
 
 int main(){
     getInput();
-    cout << "Fine Input!"<< endl;
     dijkstra();
-    cout << "Fine dijkstra!"<<endl;
     findAttackedCities();
     return 0;
 }
