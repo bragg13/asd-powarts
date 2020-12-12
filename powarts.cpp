@@ -5,12 +5,11 @@
 #include <map>
 using namespace std;
 
-// START Spazio dichiarazione funzioni
+// ===== Dichiarazione Funzioni =====
 void getInput();
 void dijkstra();
 void findAttackedCities();
-
-// END Spazio dichiarazione funzioni
+// ===== Dichiarazione Funzioni =====
 
 
 struct edge {
@@ -19,10 +18,10 @@ struct edge {
 };
 
 struct citta {            
-    vector<edge> adj;
-    bool is_infinity = true;
-    int distance;
-    int predecessore;        
+    vector<edge> adj;               //edges adiacenti
+    bool is_infinity = true;        //gestione di INF in dijkstra
+    int distance;                   //distanza da povo
+    int predecessore;               //il nodo precedente
     int count_apparizioni = 1;      //il grafo è connesso, il nodo appare almeno 1 volta in un percorso minimo
 };
 
@@ -30,12 +29,12 @@ struct citta {
 int N;                              //numero di citta
 int M;                              //numero di archi
 int P;                              //powarts
-vector<citta> graph;
-vector<int> parenti = vector<int>(N);
-int _max = 1;
+vector<citta> graph;                //il grafo
+int _max = 0;                       //numero di citta attaccate
+int _maxI = 0;                      //indice della citta attaccata
 
 void getInput(){
-    ifstream in("input9.txt");
+    ifstream in("input.txt");
     in >> N >> M >> P;
     graph.resize(N);
 
@@ -59,25 +58,22 @@ void getInput(){
 }
 
 
-// void pushaParenti(int nodo){
-//     if(graph[nodo].predecessore == P){
-//         return;
-//     }
-//     parenti.push_back(nodo);
-//     pushaParenti(graph[nodo].predecessore);
-//     cout << nodo << "-";
-// }
-
-
-void printPath(int nodo, map<int, int> &occorrenze){
-    if(graph[nodo].predecessore == -1){
+/*
+* Tiene traccia delle occorrenze dei nodi e quali nodi attraversano altri attraverso una mappa
+*/
+void printPath(int nodoOrig, int nodo, map<int, vector<int>> &occorrenze){
+    if(graph[nodo].predecessore == -1){                         //se il predecessore è -1 è powarts, chiudo
         return;
     }
+    
+    occorrenze[nodo].push_back(nodoOrig);                       //nodo è attraversato dal best path di nodoOriginale
 
-    occorrenze[nodo]++;
-    if (occorrenze[nodo] > _max)
-        _max = occorrenze[nodo];
-    printPath(graph[nodo].predecessore, occorrenze);
+    if (occorrenze[nodo].size() > _max){                        //tengo traccia del massimo
+        _max = occorrenze[nodo].size();
+        _maxI = nodo;
+    }
+
+    printPath(nodoOrig, graph[nodo].predecessore, occorrenze);  //ricorsivamente procedo con il predecessore
     // cout << nodo << " ";
 
 }
@@ -103,74 +99,37 @@ void dijkstra(){
                 graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;								    //nuova distanza
                 graph[nodo_adj].is_infinity = false;					
                 graph[nodo_adj].predecessore = nodo;                                                                //salvo il predecessore del nodo in esame
-                // pushaParenti(nodo_adj);
                 q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											    //metto il queue la coppia con la distanza di questo nodo
             }
-            // else if(!graph[nodo_adj].is_infinity && graph[nodo_adj].distance == graph[nodo].distance+nodo_adj_weight){
-            //     //possibile nds
-            //     if(graph[nodo_adj].predecessore == graph[nodo]){
-            //         cout << "nodo di scambio" << endl;
-            //         cout <<
-            //     }
-            // }
+            
         }
     }
-    // delete &q;
 }
 
 
 void findAttackedCities(){     
-    map<int, int> occorrenze = map<int,int>();
+    map<int, vector<int> > occorrenze;              //<nodo, <nodi che ci passano> >
+
     for(int i=0; i<N ; i++){
         // cout << i << "= ";
-        printPath(i, occorrenze);
+        printPath(i, i, occorrenze);
+        // cout << "____" << i << ": " << occorrenze[i] << endl;
         // cout << endl;
     }
-    cout << _max << endl;
+    /* ========= DEBUG =========
+        cout << "attacked: " << _max << "@" << _maxI << endl;
+        cout << "citta: " << endl;
+        for(int i=0; i<occorrenze[_maxI].size(); i++){
+            cout << occorrenze[_maxI][i] << endl;
+        }
+       ========= DEBUG ========= */
 
-    // int max = 1;
-    // for(int i=0; i<occorrenze.size(); i++){
-    //     // if(max < occorrenze[i])
-    //     //     max = occorrenze[i];
-    //     cout << i << ": " << occorrenze[i] << endl;
-    // }
-
-    // cout << "MAX= " << max << endl;
-    //per ogni nodo del grafo itero sul suo cammino minimo per raggiungere Powarts
-  	//ad ogni nodo che incontro aumento il numero di frequenza, che ci servirà a trovare il nodo su cui passano + cammini, cioè quello che verrà attaccato
-    // for(int i = 0; i < N; i++){
-    //     for(int j = graph[i].predecessore; j != P;j = graph[j].predecessore){
-    //         graph[j].count_apparizioni++;
-    //     }
-    // }
-    // int max = 1;
-    // int nodo_attaccato = 0;         				//identifica il nodo che appartiene a più cammini e il numero di nodi che non rende più
-    // for(int i = 0; i < N; i++){						// raggiungibili se attaccato
-    //     if(graph[i].count_apparizioni > max){
-    //         max = graph[i].count_apparizioni;
-    //         nodo_attaccato = i;
-    //     }
-    // }
-    
-    // ofstream out("output.txt");
-    // out << max << endl;								//stampa il numero dei nodi non più raggiungibili in tempo
-    // std::vector<int> ritardatari;					//vettore per tenere traccia delle citta interessate dall'attacco
-    
-    // ritardatari.push_back(nodo_attaccato);      
-    // for(int i = 0; i < N; i++){               		//Soluzione naive:Itera un'altra volta tra tutti i nodi, salva i nodi nel cui cammino minimo fa parte il nodo attaccato
-    //     for(int j = graph[i].predecessore; j != P; j = graph[j].predecessore){
-    //         if(j == nodo_attaccato){
-    //             ritardatari.push_back(i);
-    //             break;								//se trovo il nodo attaccato non ho bisogno di risalire il cammino ulteriormente
-    //         }
-    //     }
-    // }
-
-    // for(int i = 0; i < ritardatari.size(); i++){
-    //     out << ritardatari[i] << endl;				//stampa i nodi non più raggiungibili in tempo
-    // }
-    
-    // out.flush(); out.close();
+    ofstream out("output.txt");
+    out << _max << endl;
+    for(int i : occorrenze[_maxI]){
+        out << i << endl;
+    }
+    out.close();
 }
 
 int main(){
