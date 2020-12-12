@@ -2,13 +2,13 @@
 #include <vector>
 #include <queue>
 #include <fstream>
-#include <unordered_set>
 using namespace std;
 
 // START Spazio dichiarazione funzioni
 void getInput();
 void dijkstra();
-void findAttackedCities();
+void findAttackedCity();
+void print_ritardatari(int nodo_attaccato, ofstream & out);
 
 // END Spazio dichiarazione funzioni
 
@@ -103,7 +103,7 @@ void dijkstra(){
 }
 
 
-void findAttackedCities(){
+void findAttackedCity(){
     int max = 0;
     int nodo_attaccato = 0;
     int tmp;
@@ -115,26 +115,32 @@ void findAttackedCities(){
         }
     }
 
-
     ofstream out("output.txt");
     out << max << endl;								//stampa il numero dei nodi non più raggiungibili in tempo
-    
-    out << nodo_attaccato << endl;    
-    for(int i = 0; i < N; i++){               		//Soluzione naive:Itera un'altra volta tra tutti i nodi, salva i nodi nel cui cammino minimo fa parte il nodo attaccato
-        for(int j = graph[i].predecessore; j != P; j = graph[j].predecessore){
-            if(j == nodo_attaccato){
-                out << i << endl;
-                break;								//se trovo il nodo attaccato non ho bisogno di risalire il cammino ulteriormente
-            }
-        }
-    }
-    
+    print_ritardatari(nodo_attaccato, out);
     out.flush(); out.close();
 }
+
+void print_ritardatari(int attacked, ofstream &out){
+    queue<int> q;
+    q.push(attacked);
+
+    int i;
+    while(!q.empty()){
+        i = q.front();
+        q.pop();
+        out << i << endl;
+        for(edge e : graph[i].adj){
+            if(graph[e.to].predecessore == i)
+                q.push(e.to);
+        }
+    }
+}
+
 
 int main(){
     getInput();
     dijkstra();
-    findAttackedCities();
+    findAttackedCity();
     return 0;
 }
