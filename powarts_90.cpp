@@ -20,11 +20,10 @@ struct edge {
 
 struct citta {            
     vector<edge> adj;
-    bool valid = true;
     bool is_infinity = true;
     int distance;
     int predecessore;        
-    int count_apparizioni = 0;      //il grafo è connesso, il nodo appare almeno 1 volta in un percorso minimo
+    int count_apparizioni = 1;      //il grafo è connesso, il nodo appare almeno 1 volta in un percorso minimo
     int grand_parent;               //numero del nodo + vicino a Powarts collegato da un percorso ottimale(inizializzato al numero della città stessa)
 };
 
@@ -34,9 +33,10 @@ int M;                              //numero di archi
 int P;                              //powarts
 vector<citta> graph;
 vector<int> nds;
+int ndstot = 0;
 
 void getInput(){
-    ifstream in("input16.txt");
+    ifstream in("inputR.txt");
     in >> N >> M >> P;
     graph.resize(N);
 
@@ -80,10 +80,8 @@ void dijkstra(){
             graph[nodo_adj].predecessore = nodo;															
             q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											
         }
-        // cout << "adj: " << nodo_adj << endl;
         nds.push_back(nodo_adj);
     }    
-    
 
     while(!q.empty()){
         nodo = q.top().second;																					//prendo il nodo con distanza minima da root 
@@ -94,19 +92,17 @@ void dijkstra(){
             if(graph[nodo_adj].is_infinity || graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){	//se il nodo non è stato scoperto ancora or trovo un percorso minore
                 for(int i=0; i<nds.size(); i++){
                     if(nds[i]==nodo_adj){
-                        // cout << " !nds: " << nodo_adj << endl;
+                        // cout << "!nds: " << nodo_adj << endl;
+                        int occorrenze = graph[nodo_adj].count_apparizioni;
+                        graph[graph[nodo].grand_parent].count_apparizioni += occorrenze;
                         nds.erase(nds.begin()+i);
                     }
                 }
                 graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;								//nuova distanza
+                graph[nodo_adj].is_infinity = false;					
                 graph[nodo_adj].predecessore = nodo;															//salvo il predecessore del nodo in esame
 
-                //se è la prima volta che lo scopro non ha senso diminuire le apparizioni
-                if(!graph[nodo_adj].is_infinity){
-                    graph[graph[nodo_adj].grand_parent].count_apparizioni--;                                        //è stato trovato un percorso + veloce, diminuisco count al vecchio grand_parent
-                }
-
-                graph[nodo_adj].is_infinity = false;					
+                graph[graph[nodo_adj].grand_parent].count_apparizioni--;                                        //è stato trovato un percorso + veloce, diminuisco count al vecchio grand_parent
                 graph[nodo_adj].grand_parent = graph[nodo].grand_parent;                                        //cambio grand_parent al nodo
                 graph[graph[nodo].grand_parent].count_apparizioni++;                                            //aggingo 1 al count del nuovo grand_parent
                 
@@ -116,12 +112,10 @@ void dijkstra(){
             }
             else if (!graph[nodo_adj].is_infinity && graph[nodo_adj].distance == graph[nodo].distance+nodo_adj_weight){
                 if(graph[nodo_adj].predecessore != nodo){
+                    graph[graph[nodo_adj].grand_parent].count_apparizioni--;
                     graph[nodo_adj].grand_parent = nodo_adj;
-                    graph[nodo_adj].count_apparizioni++;
-                    //se avevo scoperto dei figli di questo nodo, prima di capire che fosse un nds, allora tutti i suoi figli 
-                    //avranno aumentato il contatore di apparizioni del grand parent "iniziale" (cioe quello che il nodo aveva assegnato
-                    //quando è stato scoperto)
-
+                    graph[nodo_adj].count_apparizioni = 1;
+                    // cout << "nds: " << nodo_adj << endl;
                     nds.push_back(nodo_adj);
                 }
             }
@@ -135,16 +129,15 @@ void findAttackedCity(){
     int max = 0;
     int nodo_attaccato = 0;
     int tmp;
-
-    // for(int i = 0; i < graph.size();i++){
-    //     cout << "nodo: " << i << "\nPRED: " << graph[i].predecessore
-    //     << "\n  GRANP: " << graph[i].grand_parent 
-    //     << "\n  OCCOR: " << graph[i].count_apparizioni << endl;
-
+    // for(int i = 0; i < graph[P].adj.size();i++){
+    //     tmp = graph[P].adj[i].to;
+    //     if(graph[tmp].count_apparizioni > max){
+    //         max = graph[tmp].count_apparizioni;
+    //         nodo_attaccato = tmp;
+    //     }
     // }
 
     for(int i = 0; i < nds.size();i++){
-        // cout << "nds: " << nds[i] << ", app: " << graph[nds[i]].count_apparizioni << endl;
         if(graph[nds[i]].count_apparizioni > max){
             max = graph[nds[i]].count_apparizioni;
             nodo_attaccato = nds[i];
@@ -190,20 +183,13 @@ void print_ritardatari_nds(int attacked, ofstream &out){
     while(!q.empty()){
         i = q.front();
         q.pop();
-        if(graph[i].grand_parent == graph[graph[i].predecessore].grand_parent || i == attacked){ //l'or non pesa di piu, perche la seconda parte in teoria viene valutata solo la prima volta (attacked)
-            cities += to_string(i);
-            cities += "\n";
-            totCitta++;
-            for(edge e : graph[i].adj){
-                if(graph[e.to].predecessore == i) //non torno indietro
-                        q.push(e.to);
-            }
+        cities += to_string(i);
+        cities += "\n";
+        totCitta++;
+        for(edge e : graph[i].adj){
+            if(graph[e.to].predecessore == i)
+                q.push(e.to);
         }
-        // for(edge e : graph[i].adj){
-        //     if(graph[e.to].predecessore == i) //non torno indietro
-        //     if(e.to != i)
-        //         q.push(e.to);
-        // }
     }
     out << totCitta << endl;
     out << cities;
@@ -213,6 +199,6 @@ void print_ritardatari_nds(int attacked, ofstream &out){
 int main(){
     getInput();
     dijkstra();
-    findAttackedCity();
+    findAttackedCity(); 
     return 0;
 }

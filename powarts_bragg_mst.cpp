@@ -35,11 +35,10 @@ int M;                              //numero di archi
 int P;                              //powarts
 vector<citta> graph;
 vector<int> nds;
-vector<int> parent(N, -1);          //i padri
 
 
 void getInput(){
-    ifstream in("input16.txt");
+    ifstream in("input55.txt");
     in >> N >> M >> P;
     graph.resize(N);
 
@@ -63,6 +62,29 @@ void getInput(){
     in.close();
 }
 
+
+void printPath(int node, int originalNode, int attacked, vector<int> &parent){
+    if (parent[node] == P){
+        return;
+    } 
+    if(parent[node] == attacked){
+        graph[originalNode].attacked = true;
+        return;
+    }
+    printPath(parent[node], originalNode, attacked, parent);
+}
+
+void printPath2(int node, int originalNode, int attacked){
+    while(graph[node].predecessore != P){
+
+        if(graph[node].predecessore == attacked){
+            graph[originalNode].attacked = true;
+            return;
+        }
+        node = graph[node].predecessore;
+    }
+}
+
 void dijkstra(){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;          				//priority queue con min heap (il minore è il top)
 
@@ -80,7 +102,7 @@ void dijkstra(){
         if(graph[nodo_adj].is_infinity || graph[nodo_adj].distance > graph[nodo].distance+nodo_adj_weight){	
             graph[nodo_adj].distance = graph[nodo].distance+nodo_adj_weight;								
             graph[nodo_adj].is_infinity = false;					
-            graph[nodo_adj].predecessore = nodo;															
+            graph[nodo_adj].predecessore = nodo;	
             q.push(make_pair(graph[nodo_adj].distance, nodo_adj));											
         }
         // cout << "adj: " << nodo_adj << endl;
@@ -99,6 +121,8 @@ void dijkstra(){
                         // cout << "!nds: " << nodo_adj << endl;
                         // devo dare le sue occorrenze al grand parent del predecessore
                         graph[graph[nodo_adj].predecessore].grand_parent += graph[nds[i]].count_apparizioni-1;
+                        graph[graph[nodo_adj].predecessore].grand_parent += graph[nds[i]].count_apparizioni-1;
+                        
                         nds.erase(nds.begin()+i); //adjust grand parent?
                     }
                 }
@@ -110,7 +134,7 @@ void dijkstra(){
                 // }															//salvo il predecessore del nodo in esame
 
                 graph[nodo_adj].is_infinity = false;					
-                // graph[graph[nodo_adj].grand_parent].count_apparizioni--;                                        //è stato trovato un percorso + veloce, diminuisco count al vecchio grand_parent
+                graph[graph[nodo_adj].grand_parent].count_apparizioni--;                                        //è stato trovato un percorso + veloce, diminuisco count al vecchio grand_parent
                 graph[nodo_adj].grand_parent = graph[nodo].grand_parent;                                        //cambio grand_parent al nodo
                 graph[graph[nodo].grand_parent].count_apparizioni++;                                            //aggingo 1 al count del nuovo grand_parent
                 
@@ -119,8 +143,11 @@ void dijkstra(){
 
             else if (!graph[nodo_adj].is_infinity && graph[nodo_adj].distance == graph[nodo].distance+nodo_adj_weight){
                 if(graph[nodo_adj].predecessore != nodo){
+                    graph[nodo_adj].grand_parent--;
                     graph[nodo_adj].grand_parent = nodo_adj;
+
                     graph[nodo_adj].count_apparizioni++;
+                    cout << nodo_adj << " appare in "
 
                     // cout << "nds: " << nodo_adj << endl;
                     nds.push_back(nodo_adj);
@@ -129,40 +156,26 @@ void dijkstra(){
         }    
     }
 
+    // for(int i=0; i<N; i++){
+    //     cout << i << graph[i].predecessore << endl;
+    // }
 }
 
 
-void primMST(int attacked, ofstream &out){
-    cout << "attacco: " << attacked << endl;
-    cout << "    appariz: " << graph[attacked].count_apparizioni << endl;
+vector<int> primMST(int attacked){
     priority_queue< pair<int, int>, vector<pair<int,int>>, greater<pair<int,int>> > q;          				//priority queue con min heap (il minore è il top)
 
     vector<int> key(N, 100000);     //le chiavi
     vector<int> parent(N, -1);      //i padri
     vector<bool> inMST(N, false);   //vertici inclusi nel tree
 
-    q.push(make_pair(0, P));        //metto Povo nella queue
-    key[P] = 0;                     //chiave 0 per Povo
+    q.push(make_pair(0, attacked));        //metto Povo nella queue
+    key[attacked] = 0;                     //chiave 0 per Povo
     graph[attacked].attacked = true;
 
 
-    // faccio lo spanning tree partendo dal nodo attaccato, però evito di risalire
-    // tagliando i ponti con il padre
-    for(int i=0; i< graph[attacked].adj.size(); i++){
-        // if(graph[graph[attacked].adj[i].to].predecessore != attacked){
-        if(graph[graph[attacked].adj[i].to].grand_parent != attacked){
-
-            graph[attacked].adj.erase(graph[attacked].adj.begin()+i);
-        }
-    }
-
-    // for(int i=0; i< graph[attacked].adj.size(); i++){
-    //     cout << "adj " <<  graph[attacked].adj[i].to << endl;
-    // }
-
     while(!q.empty()){
         int nodo = q.top().second; q.pop();
-
         inMST[nodo] = true; //il vertice è nello sp. tree
 
         //itero usando i per avere gli adiacenti del nodo
@@ -177,35 +190,45 @@ void primMST(int attacked, ofstream &out){
                 parent[nodo_adj] = nodo;
 
                 
-                if(graph[parent[nodo_adj]].attacked){
-                    //se suo padre è attaccato, anche lui è attaccato
-                    graph[nodo_adj].attacked = true;
-                }
+                // if(graph[parent[nodo_adj]].attacked){
+                //     //se suo padre è attaccato, anche lui è attaccato
+                //     graph[nodo_adj].attacked = true;
+                // }
             }
         }
     }
-
-
-
-    //stampo i lati dello spanning tree
-    int totCitta = 0;
-    string cities = "";
+    cout << "pre" << endl;
     for(int i=0; i<N; i++){
-        
+        cout << "node:" << i << ", pre: " << graph[i].predecessore << ", gp: " << graph[i].grand_parent << endl;
+    }
+ 
+    cout << "\npar" << endl;
+    for(int i=0; i<N; i++){
+        cout << "node:" << i << ", par: " << parent[i] << endl;
+    }
+
+    return parent;
+
+    // for(int i=0; i<parent.size(); i++){
+    //     printPath(i, i, attacked, parent);
+    //     if(graph[i].attacked){
+    //         // cout << i << endl;
+    //         cities += to_string(i);
+    //         cities += "\n";
+    //         totCitta++;
+    //     }
+    // }
+
+    // out << totCitta << endl;
+    // out << cities;
+    // for(int i=0; i<N; i++){
         // if(graph[i].attacked)
         //     cout << "    node: " << i << ", par:" << parent[i] << endl;
         // else
         //     cout << "node: " << i << ", par:" << parent[i] << endl;
-        
-        if(graph[i].attacked){
-            cities += to_string(i);
-            cities += "\n";
-            totCitta++;
-        }
+
         // cout << "node: " << i << ", par:" << graph[i].predecessore << endl;
-    }
-    out << totCitta << endl;
-    out << cities;
+    // }
 }
 
 
@@ -214,32 +237,54 @@ void findAttackedCity(){
     int nodo_attaccato = 0;
     int tmp;
 
-
     for(int i = 0; i < nds.size();i++){
         // cout << "nds: " << nds[i] << endl;
+            cout << "    nodo " << nds[i] << " con " <<graph[nds[i]].count_apparizioni << endl;
         if(graph[nds[i]].count_apparizioni > max){
-            // cout << "    nodo " << nds[i] << " con " <<graph[nds[i]].count_apparizioni << endl;
             max = graph[nds[i]].count_apparizioni;
             nodo_attaccato = nds[i];
         }
     }
 
+    //devo rimuovere il padre dell'attaccato, qui
+    vector<edge> nuoviadj = vector<edge>(graph[nodo_attaccato].adj.size());
 
-    // for(int i = 0; i < nds.size();i++){
-    //     cout << "nds: " << nds[i] << endl;
-    //     if(graph[nds[i]].count_apparizioni > max){
-    //         cout << "    nodo " << nds[i] << " con " <<graph[nds[i]].count_apparizioni << endl;
-    //         max = graph[nds[i]].count_apparizioni;
-    //         nodo_attaccato = nds[i];
-    //     }
-    // }
+    cout << "nodo att:" << nodo_attaccato << endl;
+    cout << "adj pre:\n";
+    for(int i=0; i<graph[nodo_attaccato].adj.size(); i++){
+        cout << graph[nodo_attaccato].adj[i].to << endl;
+        int nodoadj = graph[nodo_attaccato].adj[i].to;
+        if(graph[nodoadj].grand_parent == nodo_attaccato){
+            nuoviadj.push_back(graph[nodo_attaccato].adj[i]);
+        }
+    }
+
+    graph[nodo_attaccato].adj = nuoviadj;
+
+    cout << "adj:\n";
+    for(int i=0; i<graph[nodo_attaccato].adj.size(); i++){
+        cout << graph[nodo_attaccato].adj[i].to << endl;
+    }
+
+    //ora in teoria posso farci uno spanning tree
+    vector<int> parents = primMST(nodo_attaccato);
 
     ofstream out("output.txt");
     
     //se ho dei nodi di scambio
     if(nds.size() > graph[P].adj.size()){
         // print_ritardatari_nds(nodo_attaccato, out);
-        primMST(nodo_attaccato, out);
+
+        for(int i=0; i<N; i++){
+            // printPath2(i, i, nodo_attaccato);
+            printPath(i, i, nodo_attaccato, parents);
+            if(graph[i].attacked){
+                out << i << endl;
+                // cout << i << endl;
+            }
+            
+        }
+        
     }else{
         out << max << endl;								//stampa il numero dei nodi non più raggiungibili in tempo
         print_ritardatari(nodo_attaccato, out);
